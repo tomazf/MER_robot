@@ -279,6 +279,7 @@ void setup() {
   // DS init
 #if defined(DS_pin)
   DStemp.begin();
+  DStemp.setResolution(11);
   Serial.println("DS init OK!");
 #endif
 
