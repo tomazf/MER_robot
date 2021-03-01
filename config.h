@@ -9,6 +9,7 @@
 #define rgbLED_pin A7         // RGB white LED
 #define readBATT_pin A15      // battery measure
 #define LDR_pin A9            // simple analog light detector
+#define DS_pin 7              // DS18B20 digital temp sensor
 
 // MOTOR pins
 //
@@ -55,7 +56,6 @@
 
 // set LOOP intervals
 //
-#define INTERVAL_MOVE 1000
 #define INTERVAL_GPS 1000
 #define INTERVAL_COMPASS 100
 #define INTERVAL_BATT 30000
@@ -68,11 +68,12 @@
 
 // GRIPP MEASUREMENT and control
 //
-#define USE_GRIPPER           // is gripper mounted?
-//#define USE_GPS             // is GPS mounted?
-#define USE_COMPASS           // is compass mounted?
+#define USE_GRIPPER           // is gripper mounted/usedf?
+#define USE_GPS               // is GPS mounted/used?
+#define USE_COMPASS           // is compass mounted/used?
 #if defined(USE_GPS)
 #define GPS_PORT Serial1      // HW serial
+#define GPS_BAUD 9600         // HW serial
 #endif
 
 #define LED_MIN_BLINK 30      // min off/on delay
@@ -102,6 +103,7 @@ bool vl53_present = true;       // for init state
 bool _turn_init = true;              // could be used as local-only variablesbool 
 bool _edgeAvoidance_init = true;     // could be used as local-only variablesbool
 bool _timer_custom_init = true;      // could be used as local-only variable
+bool _ds_init = true;                // could be used as local-only variable
 int _angle_rel;                 // for function sends
 int _dir;                       // for function sends
 int rotation_calibrate = 0;     // stop rotating motors at diff - calibration

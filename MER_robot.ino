@@ -17,7 +17,7 @@
 //
 // Added listed HW - feb. 2021
 //  - 1x ESP-01 module    (SW only simple web-to-serial for now with TCP socket) - modified RoboRemo code
-//                         WEB: https://github.com/roboremo/ESP8266-WiFi-UART-Bridge         
+//                         WEB: https://github.com/roboremo/ESP8266-WiFi-UART-Bridge
 //                         APP: Android App to connect - RoboRemo Free
 //  - 1x GPS module (only Rx used) - parsing GPGGA messages
 //
@@ -26,6 +26,7 @@
 //  - 1x onboard ESP32 camera module
 //  - 1x gipper and camera mount 3D printed parts
 //  - 1x LDR sensor
+//  - 1x DS1820s temp sensor
 //
 // Added listed SW - mar. 2021
 //  - neotimer lib
@@ -92,6 +93,11 @@
 #include <compass.h>
 #endif
 
+#if defined(DS_pin)
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#endif
+
 // do better - use timer class
 unsigned long timeG_1 = 0;          // for state 1
 unsigned long timeG_2 = 0;          // for state 3
@@ -137,9 +143,29 @@ State* S4 = machine_gripper.addState(&state4);    // read feedback and compare
 State* S5 = machine_gripper.addState(&state5);    // hold nad wait for release command - grip_release
 #endif
 
-#if defined(USE_GPS)
+#ifdef USE_GPS
 char nmeaBuffer[100];
 MicroNMEA nmea(nmeaBuffer, sizeof(nmeaBuffer));
+
+//     - LAT
+//     - LON
+//     - time - h:m:s
+//     - fix
+typedef struct {
+  float lat;
+  float lon;
+  uint8_t h;
+  uint8_t m;
+  uint8_t s;
+  bool fix;
+  uint8_t num;
+} gps;
+gps GPS_data;
+#endif
+
+#ifdef DS_pin
+OneWire oneWire(DS_pin);
+DallasTemperature DStemp(&oneWire);
 #endif
 
 Neotimer timer_COMPASS = Neotimer(INTERVAL_COMPASS);    // Set timer's preset nad start
@@ -149,6 +175,7 @@ Neotimer timer_OLED = Neotimer(INTERVAL_OLED);          // Set timer's preset na
 Neotimer timer_GPS = Neotimer(INTERVAL_GPS);            // Set timer's preset nad start
 Neotimer timer_ARM = Neotimer(INTERVAL_ARM);            // Set timer's preset nad start
 Neotimer timer_GRIP = Neotimer(INTERVAL_GRIP);          // Set timer's preset nad start
+Neotimer timer_DS = Neotimer(INTERVAL_GPS);             // Set timer's preset nad start
 Neotimer timer_CUSTOM;                                  // Set timer's preset nad start - custom delay
 
 // array of objects for onboard LEDs
@@ -171,28 +198,29 @@ SerialCommand get_data_("G", get_data);       // G - get commands
 // ---------------------------------------------------------------------------
 // VARIABLES
 //
-// for display:      r  g  b  c s1 s2 s3 s4  x  y  z  B  V  L
-//                   0  1  2  3  4  5  6  7  8  9 10 11 12 13
-int OLED_data[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+// for display:      r  g  b  c s1 s2 s3 s4  x  y  z  B  V  L  T
+//                   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
+int OLED_data[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /* OLED_data values:
- *  
- *  0 - red
- *  1 - green
- *  2 - blue
- *  3 - clear
- *  4 - VL53x_s1
- *  5 - VL53x_s2
- *  6 - VL53x_s3
- *  7 - VL53x_s4
- *  8 - compass X
- *  9 - compass Y
- *  10 - compass Z
- *  11 - bearing
- *  12 - battery voltage
- *  13 - light detector
- *  
- */
+
+    0 - red
+    1 - green
+    2 - blue
+    3 - clear
+    4 - VL53x_s1
+    5 - VL53x_s2
+    6 - VL53x_s3
+    7 - VL53x_s4
+    8 - compass X
+    9 - compass Y
+    10 - compass Z
+    11 - bearing
+    12 - battery voltage
+    13 - light detector
+    14 - DS18B20 temp (must divide by 100)
+
+*/
 
 
 // for i2c devices and status
@@ -233,6 +261,9 @@ void setup() {
   // serial baud setup
   Serial.begin(115200);
   Serial2.begin(9600);                // BT module
+#ifdef USE_GPS
+  GPS_PORT.begin(GPS_BAUD);           // set GPS baud
+#endif
   delay(10);                          // wait until serial port opens for native USB devices
 
   // start I2C
@@ -244,6 +275,13 @@ void setup() {
   //
   analogReference(DEFAULT);           // use AREF for reference voltage
   pinMode(readBATT_pin, INPUT);
+
+  // DS init
+#if defined(DS_pin)
+  DStemp.begin();
+  Serial.println("DS init OK!");
+#endif
+
 
   // LED init
   //
@@ -385,6 +423,9 @@ void loop() {
     // parse GPS data
     parse_gps();
 #endif
+
+    // read DS and LDR data - if configured
+    read_DS_LDR();
 
     // it has delay, only once every second (one write takes 60ms)
     // so loop can work faster - measurments still get their data!!

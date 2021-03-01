@@ -5,19 +5,50 @@
 //
 // for GPS - receive and store to object data
 //
-//
-// - not final CODE - should be edited and put in parser object
+// - not final CODE - should be edited and put in parser object - for now is OK
 //     - LAT
 //     - LON
-//     - time data - h:m:s
-// - better coding needed
+//     - time - h:m:s
+//     - fix
+//     - num
 //
 
 #if defined(USE_GPS)
 
-void show_gps() {
+void save_GPS_data()
+{
+  //Serial.print("Valid fix: ");
+  GPS_data.fix = (bool)nmea.isValid();
 
-  // Output GPS information from previous second
+  //Serial.print("Num. satellites: ");
+  GPS_data.num = (uint8_t)nmea.getNumSatellites();
+
+  GPS_data.h = (uint8_t)nmea.getHour();
+  GPS_data.m = (uint8_t)nmea.getMinute();
+  GPS_data.s = (uint8_t)nmea.getSecond();
+
+  GPS_data.lat = nmea.getLatitude() / 1000000.;
+  GPS_data.lon = nmea.getLongitude() / 1000000.;
+
+  // clear for next read
+  nmea.clear();
+}
+
+void parse_gps()
+{
+  while ( GPS_PORT.available())
+  {
+    char c = GPS_PORT.read();
+    nmea.process(c);
+  }
+  if (timer_GPS.repeat())
+  {
+    save_GPS_data();
+  }
+}
+
+/* functions available
+
   Serial.print("Valid fix: ");
   Serial.println(nmea.isValid() ? "yes" : "no");
 
@@ -52,18 +83,6 @@ void show_gps() {
     Serial.println("not available");
 
   nmea.clear();
-}
-
-void parse_gps()
-{
-  if (timer_GPS.repeat())
-  {
-    while ( GPS_PORT.available())
-    {
-      char c = GPS_PORT.read();
-      nmea.process(c);
-    }
-  }
-}
+*/
 
 #endif

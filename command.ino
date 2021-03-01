@@ -167,6 +167,7 @@ void set_led(SerialCommands* sender)
 //      G 0       // only first value from array is sent
 //      G 1       // only second value from array is sent
 //      G 3       // only fourth value from array is sent
+//      G 55      // GPS data is sent
 //
 void get_data(SerialCommands* sender)
 {
@@ -185,6 +186,28 @@ void get_data(SerialCommands* sender)
     sender->GetSerial()->println(";ACK");
     return;
   }
+#ifdef USE_GPS
+  else if (atoi(st_str) == 55)
+  {
+    sender->GetSerial()->print("D-GPS;");
+    sender->GetSerial()->print(GPS_data.lat);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->print(GPS_data.lon);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->print(GPS_data.h);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->print(GPS_data.m);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->print(GPS_data.s);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->print(GPS_data.fix);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->print(GPS_data.num);
+    sender->GetSerial()->print(";");
+    sender->GetSerial()->println("ACK");
+    return;
+  }
+#endif
   else
   {
     if (abs(atoi(st_str)) < (sizeof(OLED_data) / sizeof(int)))

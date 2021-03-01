@@ -115,9 +115,22 @@ void write_OLED() {
     display.setCursor(60, 24);
     display << " 4:" << OLED_data[7];
 
+#ifdef LDR_pin
     display.setCursor(0, 32);
     display << "L: " << OLED_data[13];
-        
+#endif
+#ifdef DS_pin
+    display.setCursor(0, 40);
+    display << "T: " << _FLOAT(OLED_data[14] / 10.0, 1) << "C";    // one decimal only
+#endif
+
+#ifdef USE_GPS
+    display.setCursor(60, 32);
+    display << "H:" << GPS_data.h << ":" << GPS_data.m << "." << GPS_data.s;
+    display.setCursor(60, 40);
+    display << "F:" << GPS_data.fix;
+#endif
+
     display.drawLine(0, 54, 127, 54, 1);
     display.setCursor(4, 56);
     display << "B:" << (float)OLED_data[12] / 1000 << "V ";
@@ -192,7 +205,35 @@ void read_VL53x()
 
 }
 
-//read RGB data
+
+// read DS data - async
+// read LDR analog light intensity
+//
+void read_DS_LDR()
+{
+#ifdef DS_pin
+  if (_ds_init)
+  {
+    DStemp.setWaitForConversion(false);        // makes it async
+    DStemp.requestTemperatures();
+    DStemp.setWaitForConversion(true);
+    _ds_init = false;
+  }
+#endif
+
+  if (timer_DS.repeat())                      // waited long enoguh?
+  {
+#ifdef DS_pin
+    OLED_data[14] = (int)(DStemp.getTempCByIndex(0) * 10);
+#endif
+#ifdef LDR_pin
+    OLED_data[13] = analogRead(LDR_pin);
+#endif
+    _ds_init = true;
+  }
+}
+
+// read RGB data
 //
 void read_RGB()
 {
@@ -209,10 +250,6 @@ void read_RGB()
     red = rgb_sensor.read16(TCS34725_RDATAL);
     green = rgb_sensor.read16(TCS34725_GDATAL);
     blue = rgb_sensor.read16(TCS34725_BDATAL);
-
-#if defined(LDR_pin)
-    OLED_data[13] = analogRead(LDR_pin);
-#endif
 
     //rgb_sensor.setInterrupt(true);      // turn off LED
 
@@ -293,7 +330,7 @@ void update_LED()
   //   LED[3] - gripper HOLD state
   //       ON - gripper_hold
   //      OFF - gripper_off
-  //    BLINK - gripping
+  //    BLINK - gripping (or trying to)
   //
 
   // update all LEDs
@@ -457,7 +494,7 @@ void LEDerror() {
 //
 // robotAvoidance_VL - optical avoidance based on obstacle distance
 // robotLineFollow  - line follower mode
-// robotEdgeAvoidance_IR - edge avoidance by IR sensors
+// robotEdgeAvoidance_IR - edge avoidance based on IR sensors
 // robotRelTurn - relative angle Turn - need compass
 // robotAbsTurn - absolute angle Turn - need compass
 //
