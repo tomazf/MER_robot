@@ -63,7 +63,11 @@ void set_mode(SerialCommands* sender)
     //
     if (atoi(st_str) == 20) motor.setSpeed(atoi(nd_str));
     if (atoi(st_str) == 21) motor.setSpeedTurn(atoi(nd_str));
-    if (atoi(st_str) == 22) motor.setSpeedOffset(atoi(nd_str), (atoi(nd_str) > 0) ? 1 : 0);
+    if (atoi(st_str) == 22)
+    {
+      motor.setSpeedOffset(atoi(nd_str), (atoi(nd_str) > 0) ? 1 : 0);
+      write_EEPROM((int8_t)atoi(nd_str));                                     // save to EEPROM
+    }
 #if defined(USE_GRIPPER)
     if (atoi(st_str) == 23) arm_move(atoi(nd_str));
 #endif

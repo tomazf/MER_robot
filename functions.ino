@@ -71,6 +71,32 @@ bool init_LED()
   return true;
 }
 
+// init EEPROM data
+//
+//  address |      value    |  type
+//     10   |  motor offset | int8_t
+//
+void init_EEPROM()
+{
+  uint8_t base_addr = 9;
+  if (EEPROM.read(base_addr) == 55)           // eeprom data was previously set, we can use it
+  {
+    _motor_offset = (int8_t)EEPROM.read(base_addr + 1);   // must know data type!!
+    Serial.println("EEPROM init/read OK!");
+  }
+  else Serial.println("EEPROM init OK!");
+}
+
+// write to EEPROM
+//
+void write_EEPROM(int8_t val)                 // currently only one value - should be updated with address
+{
+  uint8_t base_addr = 9;
+  EEPROM.write(base_addr, 55);
+  EEPROM.write(base_addr + 1, val);
+}
+
+
 // serial parser INIT
 //
 void init_serialParser() {
@@ -95,12 +121,12 @@ void write_OLED() {
     display.setTextColor(WHITE);
 
     display.setCursor(0, 0);
-    display << "RGB R:" << OLED_data[0] << "\n";
-    display << "    G:" << OLED_data[1];
+    display << "RGB R: " << OLED_data[0] << "\n";
+    display << "    G: " << OLED_data[1];
     display.setCursor(60, 0);
-    display << " B:" << OLED_data[2];
+    display << " B: " << OLED_data[2];
     display.setCursor(60, 8);
-    display << " C:" << OLED_data[3];
+    display << " C: " << OLED_data[3];
     display.println();
 
     display.setCursor(104, 0);
@@ -108,37 +134,41 @@ void write_OLED() {
     display.setCursor(104, 8);
     display << "SCNM";
 
-    display << "VLx 1:" << OLED_data[4];
+    display << "VLx 1: " << OLED_data[4];
     display.setCursor(60, 16);
-    display << " 3:" << OLED_data[6] << "\n";
-    display << "    2:" << OLED_data[5];
+    display << " 3: " << OLED_data[6] << "\n";
+    display << "    2: " << OLED_data[5];
     display.setCursor(60, 24);
-    display << " 4:" << OLED_data[7];
+    display << " 4: " << OLED_data[7];
 
 #ifdef LDR_pin
-    display.setCursor(0, 32);
+    display.setCursor(0, 33);
     display << "L: " << OLED_data[13];
 #endif
 #ifdef DS_pin
-    display.setCursor(0, 40);
+    display.setCursor(0, 42);
     display << "T: " << _FLOAT(OLED_data[14] / 10.0, 1) << "C";    // one decimal only
 #endif
 
 #ifdef USE_GPS
-    display.setCursor(60, 32);
-    display << "H:" << GPS_data.h << ":" << GPS_data.m << "." << GPS_data.s;
-    display.setCursor(60, 40);
-    display << "F:" << GPS_data.fix;
+    char buffer[16];
+    sprintf (buffer, "Time: %02u:%02u:%02u\n", GPS_data.h + GPS_GMT_OFFSET, GPS_data.m, GPS_data.s);
+
+    display.setCursor(60, 33);
+    //display << "H: " << GPS_data.h << ": " << GPS_data.m << "." << GPS_data.s;
+    display << "H: " << buffer;
+    display.setCursor(60, 42);
+    display << "F: " << GPS_data.fix;
 #endif
 
     display.drawLine(0, 54, 127, 54, 1);
     display.setCursor(4, 56);
-    display << "B:" << (float)OLED_data[12] / 1000 << "V ";
+    display << "B: " << (float)OLED_data[12] / 1000 << "V ";
 #ifdef MEMORY_FREE_H
-    display << "M:" << freeMemory();
+    display << "M: " << freeMemory();
 #endif
 #ifdef USE_COMPASS
-    display << " H:" << OLED_data[11];
+    display << " H: " << OLED_data[11];
 #endif
 
     // update display (refresh)
@@ -255,10 +285,10 @@ void read_RGB()
 
     if (SERIAL_DEBUG)
     {
-      Serial.print("C:\t"); Serial.print(clear);
-      Serial.print("\tR:\t"); Serial.print(red);
-      Serial.print("\tG:\t"); Serial.print(green);
-      Serial.print("\tB:\t"); Serial.print(blue);
+      Serial.print("C: \t"); Serial.print(clear);
+      Serial.print("\tR: \t"); Serial.print(red);
+      Serial.print("\tG: \t"); Serial.print(green);
+      Serial.print("\tB: \t"); Serial.print(blue);
       Serial.println();
     }
 
@@ -284,7 +314,7 @@ void read_Compass()
     OLED_data[8] = (int)compass_x_scalled;
     OLED_data[9] = (int)compass_y_scalled;
     OLED_data[10] = (int)compass_z_scalled;
-    OLED_data[11] = (int)bearing;
+    OLED_data[11] = (int)bearing + _declination;
 
 
     if (SERIAL_DEBUG)

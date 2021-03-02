@@ -34,6 +34,7 @@
 //  - state machine for gripper
 //  - a few robot functions
 //  - sender object handler
+//  - EEPROM init (declination, motor offset)
 //
 // libs:
 //      compass: https://github.com/helscream/HMC5883L_Header_Arduino_Auto_calibration/tree/master/Core/Compass_header_example_ver_0_2
@@ -57,6 +58,7 @@
 //  - added neotimer class - for easy delay management
 //  - added serial command parser (F, L, G)
 //  - added ACK reply status for serial
+//  - EEPROM storage
 //
 
 // ---------------------------------------------------------------------------
@@ -79,6 +81,7 @@
 #include <SerialCommands.h>
 #include <MemoryFree.h>
 #include <neotimer.h>
+#include <EEPROM.h>
 
 #if defined(USE_GRIPPER)
 #include <StateMachine.h>
@@ -276,6 +279,9 @@ void setup() {
   analogReference(DEFAULT);           // use AREF for reference voltage
   pinMode(readBATT_pin, INPUT);
 
+  // EEPROM init
+  init_EEPROM();                      // save data
+
   // DS init
 #if defined(DS_pin)
   DStemp.begin();
@@ -370,6 +376,7 @@ void setup() {
   // motor init
   //
   motor.init();
+  motor.setSpeedOffset(_motor_offset, (_motor_offset > 0) ? 1 : 0);     // initial offset from EEPROM
   Serial.println("MOTOR init OK!");
 
   // write some text

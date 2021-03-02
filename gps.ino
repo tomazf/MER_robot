@@ -15,6 +15,8 @@
 
 #if defined(USE_GPS)
 
+// save to predefined struct
+//
 void save_GPS_data()
 {
   //Serial.print("Valid fix: ");

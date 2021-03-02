@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <stdint.h>
+
 // ---------------------------------------------------------------------------
 // DEFINES
 //
@@ -74,6 +76,7 @@
 #if defined(USE_GPS)
 #define GPS_PORT Serial1      // HW serial
 #define GPS_BAUD 9600         // HW serial
+#define GPS_GMT_OFFSET 1      // time-offset
 #endif
 
 #define LED_MIN_BLINK 30      // min off/on delay
@@ -100,12 +103,14 @@
 int command = 0;                // hold case command DATA
 bool vl53_present = true;       // for init state
 
-bool _turn_init = true;              // could be used as local-only variablesbool 
+bool _turn_init = true;              // could be used as local-only variablesbool
 bool _edgeAvoidance_init = true;     // could be used as local-only variablesbool
 bool _timer_custom_init = true;      // could be used as local-only variable
 bool _ds_init = true;                // could be used as local-only variable
 int _angle_rel;                 // for function sends
 int _dir;                       // for function sends
+uint8_t _declination = 4;       // for compass declination value - find yours: https://www.magnetic-declination.com/
+int8_t _motor_offset = 0;       // for motor offset value - from EEPROM
 int rotation_calibrate = 0;     // stop rotating motors at diff - calibration
 
 // control variables and feedback pins for GRIPPER
