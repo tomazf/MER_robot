@@ -43,7 +43,7 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
   - sender object handler
   - added IR/VL53x/RGB/compass data for GET command
 
- libs:
+ libs used:
  - compass https://github.com/helscream/HMC5883L_Header_Arduino_Auto_calibration/tree/master/Core/Compass_header_example_ver_0_2
  - softI2C https://github.com/Fire7/Adafruit_TCS34725_SoftI2C for TCS34725
  - TCS_int https://github.com/adafruit/Adafruit_TCS34725/blob/master/examples/interrupt/interrupt.ino
@@ -55,11 +55,11 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
  - freeMEM https://github.com/maniacbug/MemoryFree
  - neotimer https://github.com/jrullan/neotimer
 
- Description:
+ Functional description:
   - added LED class
   - added MOTOR class
   - added VL53L0X class
-  - added few simple robot functions
+  - added few simple robot functions (see source)
   - added robot turning functions (absolute, relative with direction)
   - added state-machine logic for gripper
   - added neotimer class - for easy delay management
