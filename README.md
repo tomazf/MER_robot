@@ -69,4 +69,50 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
   
 # COMMAND reference
 	
-	command parser (F, L, G)
+This section briefly describes serial command parser for MER robot. Commands for controlling or getting status from robot are processed on Arduino UART with 115200 baud. Serial ports for communication are defined in SW (can be multiple). 
+
+All commands must be sent with CR and LF line endings (this can be modified in source code).
+All commands receive ACK messages. If unknown command is sent/received, sender is notified.
+Commands can have multiple parameters, as described.
+
+Command are divided in 3 groups:
+ - L (LED commands) for manipulating onboard LEDs
+ - F (FUNCTION mode commands) for setting different modes and variables of a robot
+ - G (GET data commands) for getting sensor data and updates if defined
+
+Command description (L):
+  L 1 1     // LED 1 on
+  L 1 0     // LED 1 off
+  L 0 2     // LED 0 blink mode
+  L 0 2 100 // LED 0 set blink 100ms only!
+  L 20      // all off
+  L 21      // all on
+  
+Command description (F):
+  F 1     // set command = 1  -> see execute_command() in **functions.ino**
+  F 2     // set command = 2  -> see execute_command() in **functions.ino**
+  F .
+  F 11    // stop gripper
+  F 12    // run gripper
+  F 13    // release gripper
+  F 20 80   // set motor speed to 80
+  F 21 50   // set motor speed_turn increment to 50
+  F 22 10   // set motor speed_offset_l to 10 and right to 0
+  F 22 -10  // set motor speed_offset_r to 10 and left to 0
+  F 23 55   // set arm angle 55°
+  F 24 60   // robot relative angle turn RIGHT -> command 14
+  
+Command description (G):
+  G         // complete array is sent (no parameter)
+  G 0       // only first value from array is sent
+  G 1       // only second value from array is sent
+  G 3       // only fourth value from array is sent
+  G 54      // send GRIPPER state -> 0 = stop, 1 = gripping, 2 = hold_state
+  G 55      // only GPS data is sent to caller (if available)
+  G 56      // only IR data is sent to caller
+  G 57      // only VLx data is sent to caller
+  G 58      // only RGB data is sent to caller
+  G 59      // only COMPASS data is sent to caller
+
+
+!TODO - add GET command for periodically send sensor data to client
