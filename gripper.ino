@@ -16,8 +16,6 @@
 int feedbackValue;
 int feedbackValue_pre;
 
-bool grip_hold_state = false;   // hold indicator
-bool grip_run = false;          // run gripper
 bool grip_release = false;      // to reset state 5
 int grip_value = 0;             // gripper value
 int arm_value = 0;              // robotic arm value

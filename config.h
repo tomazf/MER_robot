@@ -113,6 +113,11 @@ uint8_t _declination = 4;       // for compass declination value - find yours: h
 int8_t _motor_offset = 0;       // for motor offset value - from EEPROM
 int rotation_calibrate = 0;     // stop rotating motors at diff - calibration
 
+#if defined(USE_GRIPPER)
+bool grip_hold_state = false;   // hold indicator
+bool grip_run = false;          // run gripper
+#endif
+
 // control variables and feedback pins for GRIPPER
 //
 #if defined(USE_GRIPPER)

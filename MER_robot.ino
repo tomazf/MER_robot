@@ -1,7 +1,7 @@
 //
 // Simple init sketch for robot (MER project - https://ict.aiju.info/mer)
 //
-// version: v7 - 28.2.2021
+// version: v8 - 8.3.2021
 //
 // Sensors/defined HW:
 //  - 4x VL53L0x (range senzor) with non-blocking library
@@ -35,6 +35,7 @@
 //  - a few robot functions
 //  - sender object handler
 //  - EEPROM init (declination, motor offset)
+//  - added IR/VL53x/RGB/compass data for GET command
 //
 // libs:
 //      compass: https://github.com/helscream/HMC5883L_Header_Arduino_Auto_calibration/tree/master/Core/Compass_header_example_ver_0_2
@@ -58,7 +59,7 @@
 //  - added neotimer class - for easy delay management
 //  - added serial command parser (F, L, G)
 //  - added ACK reply status for serial
-//  - EEPROM storage
+//  - added EEPROM storage function (for calibration data)
 //
 
 // ---------------------------------------------------------------------------
@@ -67,13 +68,12 @@
 #include "./config.h"
 #include "./src/ledBlink.h"
 #include "./src/motor.h"
-#include "./src/VL53L0X.h"                // Install Pololu modified lib by Ferbi - read comments above
+#include "./src/VL53L0X.h"                // install Pololu modified lib by Ferbi - read comments above
 
 #include <Wire.h>
 #include "./src/image.h"
 #include <Streaming.h>
-#include "Adafruit_TCS34725softi2c.h"     // https://github.com/Fire7/Adafruit_TCS34725_SoftI2C
-//#include "Adafruit_TCS34725.h"          // HW I2C - not used due to same address of VL53X senzor at startup (RGB senzor addr: 0x29 HEX (fixed) + LED pin)
+#include "Adafruit_TCS34725softi2c.h"     // https://github.com/Fire7/Adafruit_TCS34725_SoftI2C - HW I2C is not used due to same address of VL53X senzor at startup (RGB senzor addr: 0x29 fixed)
 #include <Adafruit_GFX.h>                 // Install Adafruit SSD1306 v2.4.x lib or higher in Arduino IDE
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_Sensor.h>
@@ -150,10 +150,13 @@ State* S5 = machine_gripper.addState(&state5);    // hold nad wait for release c
 char nmeaBuffer[100];
 MicroNMEA nmea(nmeaBuffer, sizeof(nmeaBuffer));
 
+// struct for GPS data
 //     - LAT
 //     - LON
 //     - time - h:m:s
 //     - fix
+//     - num
+//
 typedef struct {
   float lat;
   float lon;
@@ -181,7 +184,8 @@ Neotimer timer_GRIP = Neotimer(INTERVAL_GRIP);          // Set timer's preset na
 Neotimer timer_DS = Neotimer(INTERVAL_GPS);             // Set timer's preset nad start
 Neotimer timer_CUSTOM;                                  // Set timer's preset nad start - custom delay
 
-// array of objects for onboard LEDs
+// array of objects for onboard LEDs - 5 LEDs
+// 5 LEDs currently - 4 on PCB one on RGB sensor
 //
 ledBlink LED[] = {ledBlink(LED_pin1), ledBlink(LED_pin2), ledBlink(LED_pin3), ledBlink(LED_pin4), ledBlink(rgbLED_pin)};
 
@@ -201,9 +205,9 @@ SerialCommand get_data_("G", get_data);       // G - get commands
 // ---------------------------------------------------------------------------
 // VARIABLES
 //
-// for display:      r  g  b  c s1 s2 s3 s4  x  y  z  B  V  L  T
-//                   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
-int OLED_data[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+// for display:      r  g  b  c s1 s2 s3 s4  x  y  z  B  V  L  T IR
+//                   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+int OLED_data[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /* OLED_data values:
 
@@ -222,6 +226,7 @@ int OLED_data[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     12 - battery voltage
     13 - light detector
     14 - DS18B20 temp (must divide by 100)
+    15 - IR sensors - bit-shift DATA (6 sensors in 1 32bit value (first 26 bits are zero): 00123456)
 
 */
 
@@ -230,9 +235,6 @@ int OLED_data[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 byte i2c_device[2][7] = { {0x29, 0x30, 0x31, 0x32, 0x33, 0x1e, 0x3c},
   {0, 0, 0, 0, 0, 0, 0}
 };
-
-// size collect
-int velikost = sizeof(i2c_device) / 2;
 
 
 // ---------------------------------------------------------------------------
@@ -420,6 +422,7 @@ void loop() {
     read_Batt();
     read_RGB();
     read_VL53x();
+    read_IR();
 
 #if defined(USE_GRIPPER)
     // do gripper and arm stuff

@@ -10,7 +10,7 @@
 // detect all I2C devices
 //
 void i2c_presence() {
-  for (int i = 1; i < velikost; i++)
+  for (int i = 1; i < sizeof(i2c_device) / 2; i++)
   {
     Wire.beginTransmission(i2c_device[0][i]);
     if (Wire.endTransmission() == 0)
@@ -35,7 +35,7 @@ void init_OLED() {
 
   display.setCursor(0, 40);
   display.print(" devices:");
-    for (int i = 0; i < velikost; i++) if (i2c_device[1][i] == 1) display.print("+"); else display.print("-");
+    for (int i = 0; i < sizeof(i2c_device) / 2; i++) if (i2c_device[1][i] == 1) display.print("+"); else display.print("-");
 
   display.display();
   delay(4000);
@@ -300,6 +300,24 @@ void read_RGB()
   }
 }
 
+// read IR sensors
+//
+void read_IR()
+{
+  int IR_data = 0;
+
+  // bitWrite - from LSB to MSB
+  bitWrite(IR_data, 0, digitalRead(IR_SENSOR_RIGHT2));
+  bitWrite(IR_data, 1, digitalRead(IR_SENSOR_RIGHT1));
+  bitWrite(IR_data, 2, digitalRead(IR_SENSOR_CENTER));
+  bitWrite(IR_data, 3, digitalRead(IR_SENSOR_LEFT1));
+  bitWrite(IR_data, 4, digitalRead(IR_SENSOR_LEFT2));
+
+  // save readout to table
+  OLED_data[15] = IR_data;
+}
+
+
 // read COMPASS
 //
 void read_Compass()
@@ -315,7 +333,6 @@ void read_Compass()
     OLED_data[9] = (int)compass_y_scalled;
     OLED_data[10] = (int)compass_z_scalled;
     OLED_data[11] = (int)bearing + _declination;
-
 
     if (SERIAL_DEBUG)
     {

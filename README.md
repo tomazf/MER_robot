@@ -8,7 +8,7 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
 
  Simple init sketch for robot (MER project - https://ict.aiju.info/mer)
 
- version: v7 - 28.2.2021
+ version: v8 - 8.3.2021
 
  Sensors/defined HW:
   - 4x VL53L0x (range senzor) with non-blocking library
@@ -20,7 +20,7 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
 
  Added listed HW - jan. 2021
   - 1x HM-10 (BT module)
-  - 1x nRF24L01 module  (TODO)
+  - 1x nRF24L01 module  (TODO or optional)
 
  Added listed HW - feb. 2021
   - 1x ESP-01 module    (SW only simple web-to-serial for now with TCP socket) - modified RoboRemo code
@@ -41,6 +41,7 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
   - state machine for gripper
   - a few robot functions
   - sender object handler
+  - added IR/VL53x/RGB/compass data for GET command
 
  libs:
  - compass https://github.com/helscream/HMC5883L_Header_Arduino_Auto_calibration/tree/master/Core/Compass_header_example_ver_0_2
@@ -64,3 +65,8 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
   - added neotimer class - for easy delay management
   - added serial command parser (F, L, G)
   - added ACK reply status for serial
+  - added EEPROM storage function (for calibration data)
+  
+# COMMAND reference
+	
+	command parser (F, L, G)
