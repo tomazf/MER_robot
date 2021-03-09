@@ -71,11 +71,11 @@ The project "Modelling educational robot" is meeting the necessity of the 21st D
 	
 This section briefly describes serial command parser for MER robot. Commands for controlling or getting status from robot are processed on Arduino UART with 115200 baud. Serial ports for communication are defined in SW (can be multiple). 
 
-All commands must be sent with CR and LF line endings (this can be modified in source code).
+All commands must be sent with **CR** and **LF** line endings (this can be modified in source code).
 All commands receive ACK messages. If unknown command is sent/received, sender is notified.
 Commands can have multiple parameters, as described.
 
-Command are divided in 3 groups:
+Commands are divided in 3 groups:
  - L (LED commands) for manipulating onboard LEDs
  - F (FUNCTION mode commands) for setting different modes and variables of a robot
  - G (GET data commands) for getting sensor data and updates if defined
