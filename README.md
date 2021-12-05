@@ -1,12 +1,12 @@
 # MER robot
 
-![alt text](https://ict.aiju.info/mer/pluginfile.php/1/theme_academic/logo/1614160915/mer_logo_def.png)
+![alt text](https://www.merproject.net/en/pluginfile.php/1/theme_academic/logo/1637569364/mer_logo_def.png)
 
 The project "Modelling educational robot" is meeting the necessity of the 21st Digital Century Society to implement as much as possible in the regular and open curriculum the subject programming and robotics. Robotics helps address the growing demand for teaching science, technology, engineering and maths in schools. 
 
 --------------------------------------------
 
- Simple init sketch for robot (MER project - https://ict.aiju.info/mer)
+ Simple init sketch for robot (MER project - https://www.merproject.net/en/)
 
  version: v8 - 8.3.2021
 
